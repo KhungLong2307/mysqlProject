@@ -1,0 +1,468 @@
+
+create database warehouse_management;
+use warehouse_management;
+create table product(
+    product_id char(5) primary key ,
+    product_name varchar(150) not null unique,
+    manufacturer varchar(200) not null,
+    created date default (current_date),
+    batch smallint not null,
+    quantity int not null default 0,
+    product_status bit default 1
+);
+create table employee(
+    emp_id char(5) primary key,
+    emp_name varchar(100) not null unique,
+    birth_of_date date,
+    email varchar(100) not null,
+    phone varchar(100) not null,
+    address text not null,
+    emp_status smallint default 0
+);
+create table account(
+    acc_id int primary key auto_increment,
+    user_name varchar(30) not null  unique,
+    password varchar(30) not null,
+    permission bit default 1,
+    emp_id char(5) not null unique,
+    acc_status bit default 1,
+    foreign key account(emp_id) references employee(emp_id)
+);
+create table bill(
+    bill_id long primary key auto_increment,
+    bill_code varchar(10) not null,
+    bill_type bit not null,
+    emp_id_created char(5) not null,
+    created date default (current_date),
+    emp_id_auth char(5) not null,
+    auth_date date default (current_date),
+    bill_status smallint not null default 0
+);
+create table bill(
+                     bill_id int primary key auto_increment,
+                     bill_code varchar(10) not null,
+                     bill_type bit not null,
+                     emp_id_created char(5) not null,
+                     created date default (current_date),
+                     emp_id_auth char(5),
+                     auth_date date default (current_date),
+                     bill_status smallint not null default 0,
+                     foreign key bill(emp_id_created) references employee(emp_id)
+);
+alter table account add constraint foreign key (emp_id) references employee(emp_id);
+alter table bill add constraint foreign key (emp_id_auth) references employee(emp_id);
+create table bill_detail(
+    bill_detail_id int primary key auto_increment,
+    bill_id int not null,
+    product_id char(5) not null,
+    quanity int not null check(quanity>0),
+    price float not null check(price>0),
+    foreign key (bill_id) references bill(bill_id),
+    foreign key (product_id) references product(product_id)
+);
+insert into bill_detail(bill_id, product_id, quanity, price) VALUE (6,'00001',10,5.2);
+select * from bill_detail;
+
+
+delimiter //
+create procedure login(in userName_in varchar(30),in password_in varchar(30))
+begin
+    select * from account where user_name = userName_in and password = password_in;
+end //
+delimiter ;
+call login('admin','admin');
+insert into employee value ('00001','admin','1999-01-01','admin@admin.com','12345678910','123-321',0);
+insert into account(user_name, password,permission, emp_id) value ('admin','admin',0,'00001');
+
+insert into product(product_id, product_name, manufacturer, batch) value
+    ('00001','Quần áo','shoppe','0'),
+    ('00002','Giày dép','shoppe','2'),
+    ('00003','Mỹ phẩm','shoppe','3'),
+    ('00004','Phụ kiện thời trang','shoppe','4'),
+    ('00005','Phụ kiện điện thoại','shoppe','5'),
+    ('00006','Sách','shoppe','6'),
+    ('00007','Đồ gia dụng','shoppe','7'),
+    ('00008','Thực phẩm sạch','shoppe','8'),
+    ('00009','Đồ handmade','shoppe','9'),
+    ('00010','Bánh kẹo','shoppe','10'),
+    ('00011','Trà khô, Cà phê','shoppe','11');
+
+select * from product;
+delimiter //
+create procedure getProductLength(out length_out int)
+begin
+    select count(*) into length_out from product;
+end //
+delimiter ;
+delimiter //
+create procedure getProduct(in offset_in int)
+begin
+    select * from product limit 10 offset offset_in;
+end //
+delimiter ;
+delimiter //
+create procedure createProduct(in product_id_in char(5),in product_name_in varchar(150),in manufacturer_in varchar(200),in batch_in smallint,in product_status_in bit)
+begin
+    insert into product(product_id, product_name, manufacturer, batch,product_status) value (product_id_in,product_name_in,manufacturer_in,batch_in,product_status_in);
+end //
+delimiter ;
+delimiter //
+create procedure findProduct(in id_in char(5))
+begin
+    select * from product where product_id = id_in;
+end //
+delimiter ;
+delimiter //
+create procedure productCheckName(in name_in varchar(150))
+begin
+    select * from product where product_name = name_in;
+end //
+delimiter ;
+delimiter //
+create procedure productCheckBatch(in batch_in smallint)
+begin
+    select * from product where batch = batch_in;
+end //
+delimiter ;
+delimiter //
+create procedure productCheckId(in id_in char(5))
+begin
+    select * from product where product_id = id_in;
+end //
+delimiter ;
+delimiter //
+create procedure updateProduct(in id_in char(5),in name_in varchar(150),in manufacturer_in varchar(200),in batch_in smallint,in status_in bit,in quantity_in int)
+begin
+    update product set product_name = name_in,manufacturer = manufacturer_in,batch = batch_in,product_status= status_in,quantity = quantity_in where product_id = id_in;
+end //
+delimiter ;
+delimiter //
+create procedure searchProduct(in offSet_in int,in name_in varchar(150))
+begin
+    select * from product where product_name like concat('%',name_in,'%') limit 10 offset offSet_in;
+end //
+delimiter ;
+delimiter //
+delimiter //
+create procedure searchProductLength(out length_out int,in name_in varchar(150))
+begin
+    select count(*) into length_out from product where product_name like concat('%',name_in,'%');
+end //
+delimiter ;
+insert into product(product_id, product_name, manufacturer, created, batch, quantity, product_status) value
+    ('11321','Thuốc nhuộm tóc su','shoppe','1999-4-1',20,0,0);
+insert into product(product_id, product_name, manufacturer,batch) value
+    ('1b213','Tai nghe','Sony co.Ltd xxxxxxxxxxxxxxxxx',31);
+
+
+insert into employee value
+    ('00006','Nguyễn Văn A','1999-01-01','nguyenvana@gmail.com','123456789','ABC Nguyễn Văn A',0),
+    ('00002','Nguyễn Văn B','1999-01-01','nguyenvanb@gmail.com','123456789','ABC Nguyễn Văn B',1),
+    ('00003','Nguyễn Văn C','1999-01-01','nguyenvanc@gmail.com','123456789','ABC Nguyễn Văn C',2),
+    ('00004','Nguyễn Văn D','1999-01-01','nguyenvand@gmail.com','123456789','ABC Nguyễn Văn D',0),
+    ('00005','Nguyễn Văn E','1999-01-01','nguyenvane@gmail.com','123456789','ABC Nguyễn Văn E',1);
+
+
+delimiter //
+create procedure employeeLength(out length_out int)
+begin
+    select count(*) into length_out from employee;
+end //
+delimiter ;
+
+delimiter //
+create procedure getEmployee(in offset_in int)
+begin
+    select * from employee order by emp_name limit 10 offset offset_in;
+end //
+delimiter ;
+
+delimiter //
+create procedure employeeCheckId(in id_in char(5))
+begin
+    select * from employee where emp_id = id_in;
+end //
+delimiter ;
+
+delimiter //
+create procedure employeeCheckEmail(in email_in varchar(100))
+begin
+    select * from employee where email = email_in limit 1;
+end //
+delimiter ;
+
+delimiter //
+create procedure createEmployee(in id_in char(5),in name_in varchar(100),in birth_in varchar(20),in email_in varchar(100),in phone_in varchar(100),in address_in varchar(100),in status_in smallint)
+begin
+    insert into employee value (id_in,name_in,birth_in,email_in,phone_in,address_in,status_in);
+end //
+delimiter ;
+
+delimiter //
+create procedure findUpdateById(in emp_id_in char(5))
+begin
+    select * from employee where emp_id= emp_id_in;
+end //
+delimiter ;
+
+delimiter //
+create procedure updateEmployee(in id_in char(5),in name_in varchar(100),in birth_in varchar(20),in email_in varchar(100),in phone_in varchar(100),in address_in varchar(100),in status_in smallint)
+begin
+    update employee set emp_name = name_in,birth_of_date = birth_in,email = email_in,phone = phone_in,address = address_in,emp_status = status_in where emp_id = id_in;
+end //
+delimiter ;
+
+delimiter //
+create procedure getLengthSearch(in search varchar(100),out length_out int)
+begin
+    select count(*) into length_out from employee where emp_id like concat('%',search,'%') or emp_name like concat('%',search,'%') or birth_of_date like concat('%',search,'%') or email like concat('%',search,'%') or phone like concat('%',search,'%') or address like concat('%',search,'%');
+end //
+delimiter ;
+
+delimiter //
+create procedure getEmployeeAfterSearch(in offset_in int,in search varchar(100))
+begin
+    select * from employee where emp_id like concat('%',search,'%') or emp_name like concat('%',search,'%') or birth_of_date like concat('%',search,'%') or email like concat('%',search,'%') or phone like concat('%',search,'%') or address like concat('%',search,'%') order by emp_name limit 10 offset offset_in ;
+end //
+delimiter ;
+
+insert into account(user_name, password, permission, emp_id) VALUE
+    ('nguyenvana','nguyenvana',1,'00006'),
+    ('nguyenvanb','nguyenvanb',1,'00002'),
+    ('nguyenvanc','nguyenvanc',1,'00003'),
+    ('nguyenvand','nguyenvand',1,'00004'),
+    ('nguyenvane','nguyenvane',1,'00005');
+
+delimiter //
+create procedure getAccount(in offSet_in int)
+begin
+    select * from account limit 10 offset offSet_in;
+end //
+delimiter ;
+
+delimiter //
+create procedure getLengthAccount(out length_out int)
+begin
+    select count(*) into length_out from account;
+end //
+delimiter ;
+
+delimiter //
+create procedure isCheckAccountUserName(in userName_in varchar(30))
+begin
+    select * from account where user_name = userName_in;
+end //
+delimiter ;
+
+delimiter //
+create procedure isCheckAccountEmpId(in emp_id_in char(5))
+begin
+    select * from account where emp_id = emp_id_in;
+end //
+delimiter ;
+
+delimiter //
+create procedure createAccount(in userName_in varchar(30),in password_in varchar(30),in permission_in bit,in empId_in char(5),in status_in bit)
+begin
+    insert into account(user_name, password, permission, emp_id, acc_status) VALUE (userName_in,password_in,permission_in,empId_in,status_in);
+end //
+delimiter ;
+
+delimiter //
+create procedure findAccountStatus(in id_in int)
+begin
+    select * from account where acc_id = id_in;
+end //
+delimiter ;
+
+delimiter //
+create procedure updateAccountStatus(in id_in int,in status_in bit)
+begin
+    update account set  acc_status = status_in where acc_id = id_in;
+end //
+delimiter ;
+
+delimiter //
+create procedure searchAccount(in offSet_in int,in search_in varchar(100))
+begin
+    select * from account inner join employee on account.emp_id = employee.emp_id where account.user_name like concat('%',search_in,'%') or employee.emp_name like concat('%',search_in,'%') limit 10 offset offSet_in;
+end //
+delimiter ;
+
+delimiter //
+create procedure searchAccountLength(in search_in varchar(100),out length_out int)
+begin
+    select count(*) into length_out from account inner join employee on account.emp_id = employee.emp_id where account.user_name like concat('%',search_in,'%') or employee.emp_name like concat('%',search_in,'%');
+end //
+delimiter ;
+
+delimiter //
+create procedure createbill(in billCode_in varchar(10),in billType_in bit,in empIdCreated_in char(5))
+begin
+    insert into bill(bill_code,bill_type,emp_id_created) value (billCode_in,billType_in,empIdCreated_in);
+end //
+delimiter ;
+
+delimiter //
+create procedure createBillDetail(in bill_id_in int,in product_id_in char(5),in quantity_in int,in price_in float)
+begin
+    insert into bill_detail(bill_id, product_id, quanity, price) value (bill_id_in,product_id_in,quantity_in,price_in);
+end //
+delimiter ;
+
+delimiter //
+create procedure takeBillId(in emp_id_in char(5),out bill_id_out int)
+begin
+    select bill_id into bill_id_out from bill where emp_id_created = emp_id_in order by bill_id DESC limit 1;
+end //
+delimiter ;
+
+delimiter //
+create procedure getBillIn(in offSet_in int,in type_in bit,in search_in varchar (100))
+begin
+    select * from bill where bill_type = type_in and (bill_id like concat('%',search_in,'%') or bill_code like concat('%',search_in,'%') or emp_id_created like concat('%',search_in,'%') or created like concat('%',search_in,'%') or emp_id_auth like concat('%',search_in,'%') or auth_date like concat('%',search_in,'%')) limit 10 offset offSet_in;
+end //
+delimiter ;
+delimiter //
+create procedure getLengthBillIn(out length_out int,in type_in bit,in search_in varchar (100))
+begin
+    select count(*) into length_out from bill where bill_type = type_in and (bill_id like concat('%',search_in,'%') or bill_code like concat('%',search_in,'%') or emp_id_created like concat('%',search_in,'%') or created like concat('%',search_in,'%') or emp_id_auth like concat('%',search_in,'%') or auth_date like concat('%',search_in,'%'));
+end //
+delimiter ;
+select count(*) from bill where bill_type = 1 and bill_id like concat('%','','%') or bill_code like concat('%','','%') or emp_id_created like concat('%','','%') or created like concat('%','','%') or emp_id_auth like concat('%','','%') or auth_date like concat('%','','%');
+insert into bill(bill_code,bill_type,bill.emp_id_created) value
+    ('00001',true,'12345'),
+    ('00002',true,'12345'),
+    ('00003',true,'12345'),
+    ('00004',true,'12345'),
+    ('00005',true,'12345'),
+    ('00006',true,'12345'),
+    ('00007',true,'12345'),
+    ('00008',true,'12345'),
+    ('00009',true,'12345'),
+    ('00010',true,'12345'),
+    ('00011',true,'12345'),
+    ('00012',true,'12345');
+
+delimiter //
+create procedure getBillInToUpdate(in offSet_in int,in type_in bit)
+begin
+    select * from bill where bill_type = type_in and (bill_status = 0 or bill_status = 1) limit 10 offset offSet_in;
+end //
+delimiter ;
+delimiter //
+create procedure getLengthBillInToUpdate(out length_out int,in type_in bit)
+begin
+    select COUNT(*) into length_out from bill where bill_type = type_in and (bill_status = 0 or bill_status = 1);
+end //
+delimiter ;
+delimiter //
+create procedure updateBillIn(in bill_id_in int,in new_code_in varchar(10),in new_status_in smallint,in auth_id_in char(5),in auth_date_in date)
+begin
+    update bill set bill_code = new_code_in,bill_status = new_status_in,emp_id_auth=auth_id_in,auth_date = auth_date_in where bill_id = bill_id_in;
+end //
+delimiter ;
+delimiter //
+create procedure getBillDetailToUpdate(in offSet_in int,in bill_id_in int)
+begin
+    select product.product_name,bill_detail.* from bill_detail inner join product on bill_detail.product_id = product.product_id where bill_id = bill_id_in limit 10 offset offSet_in;
+end //
+delimiter ;
+delimiter //
+create procedure getBillDetailToUpdateLength(out length_out int,in bill_id_in int)
+begin
+    select count(*) into length_out from bill_detail where bill_id = bill_id_in;
+end //
+delimiter ;
+delimiter //
+create procedure updateBillDetail(in bill_detail_id_in int,in quantity_in int,in price_in float)
+begin
+    update bill_detail set quanity = quantity_in,price=price_in where bill_detail_id = bill_detail_id_in;
+end //
+delimiter ;
+
+select product.product_name,bill_detail.* from bill inner join bill_detail inner join product on bill.bill_id = bill_detail.bill_id and bill_detail.product_id=product.product_id where bill.bill_type = 1;
+select product.product_name,bill_detail.*,bill.auth_date from bill_detail inner join product inner join bill on bill_detail.product_id = product.product_id and bill.bill_id = bill_detail.bill_id where bill.bill_type = 1 and bill.bill_status = 2 limit 10 offset 0;
+select product.product_name,bill_detail.*,bill.auth_date from bill_detail inner join product inner join bill on bill_detail.product_id = product.product_id and bill.bill_id = bill_detail.bill_id where bill.bill_type = 1 and bill.bill_status = 2 and bill.auth_date between '2023-11-24' and '2023-11-26' order by bill_detail.quanity desc limit 1;
+delimiter //
+create procedure takeReport(in offSet_in int,in bill_type_in bit)
+begin
+    select product.product_name,bill_detail.*,bill.auth_date from bill_detail inner join product inner join bill on bill_detail.product_id = product.product_id and bill.bill_id = bill_detail.bill_id where bill.bill_type = bill_type_in and bill.bill_status = 2 limit 10 offset offSet_in;
+end //
+delimiter ;
+delimiter //
+create procedure takeLengthReport(out length_out int,in bill_type_in bit)
+begin
+    select count(*) into length_out from bill_detail inner join product inner join bill on bill_detail.product_id = product.product_id and bill.bill_id = bill_detail.bill_id where bill.bill_type = bill_type_in and bill.bill_status = 2;
+end //
+delimiter ;
+select count(*) from bill_detail inner join product inner join bill on bill_detail.product_id = product.product_id and bill.bill_id = bill_detail.bill_id where bill.bill_type = 1 and bill.bill_status = 2 limit 10 offset 0;
+call takeReport(0,1);
+delimiter //
+create procedure takeReportBetween(in offSet_in int,in bill_type_in bit,in date1_in date,in date2_in date)
+begin
+    select product.product_name,bill_detail.*,bill.auth_date from bill_detail inner join product inner join bill on bill_detail.product_id = product.product_id and bill.bill_id = bill_detail.bill_id where bill.bill_type = bill_type_in and bill.bill_status = 2 and bill.auth_date between date1_in and date2_in limit 10 offset offSet_in;
+end //
+delimiter ;
+delimiter //
+create procedure takeLengthReportBetween(out length_out int,in bill_type_in bit,in date1_in date,in date2_in date)
+begin
+    select COUNT(*) into length_out from bill_detail inner join product inner join bill on bill_detail.product_id = product.product_id and bill.bill_id = bill_detail.bill_id where bill.bill_type = bill_type_in and bill.bill_status = 2 and bill.auth_date between date1_in and date2_in;
+end //
+delimiter ;
+
+delimiter //
+create procedure takeReportEmployee(out num_sta_0 int,out num_sta_1 int,out num_sta_2 int)
+begin
+    select count(*) into num_sta_0 from employee where emp_status = 0;
+    select count(*) into num_sta_1 from employee where emp_status = 1;
+    select count(*) into num_sta_2 from employee where emp_status = 2;
+end //
+delimiter ;
+
+create trigger after_status_update after UPDATE ON employee FOR EACH ROW
+IF NEW.emp_status = 1 or NEW.emp_status = 1 AND OLD.emp_status = 0 THEN
+UPDATE account SET acc_status = 0 WHERE account.emp_id = NEW.emp_id;
+END IF;
+
+select * from account;
+update employee set emp_status = 1 where emp_id = '00002';
+
+delimiter //
+create procedure findBill(in emp_id_in char(5),in bill_id_in int)
+begin
+    select * from bill where emp_id_created = emp_id_in or bill_id = bill_id_in order by bill_id desc limit 1;
+end //
+delimiter ;
+select * from bill_detail;
+select * from bill;
+select * from product;
+call updateProduct('00000','Quần áo','shoppe',0,true,0);
+delimiter //
+create procedure takeReportBetweenMaxest(in offSet_in int,in bill_type_in bit,in date1_in date,in date2_in date)
+begin
+    select product.product_name,bill_detail.*,bill.auth_date from bill_detail inner join product inner join bill on bill_detail.product_id = product.product_id and bill.bill_id = bill_detail.bill_id where bill.bill_type = bill_type_in and bill.bill_status = 2 and bill.auth_date between date1_in and date2_in order by bill_detail.quanity limit 1;
+end //
+delimiter ;
+delimiter //
+create procedure takeReportBetweenMinest(in offSet_in int,in bill_type_in bit,in date1_in date,in date2_in date)
+begin
+    select product.product_name,bill_detail.*,bill.auth_date from bill_detail inner join product inner join bill on bill_detail.product_id = product.product_id and bill.bill_id = bill_detail.bill_id where bill.bill_type = bill_type_in and bill.bill_status = 2 and bill.auth_date between date1_in and date2_in order by bill_detail.quanity desc limit 1;
+end //
+delimiter ;
+
+select * from bill where bill_type = true and emp_id_created = '12345' order by bill_status;
+delimiter //
+create procedure getBillByStatus(in offSet_in int,in emp_in char(5),in bill_type_in bit,in search_in varchar(100))
+begin
+    select * from bill where (bill_type = bill_type_in and emp_id_created = emp_in) and (bill_id like concat('%',search_in,'%') or bill_code like concat('%',search_in,'%') or emp_id_created like concat('%',search_in,'%') or created like concat('%',search_in,'%') or emp_id_auth like concat('%',search_in,'%') or auth_date like concat('%',search_in,'%')) order by bill_status limit 10 offset offSet_in;
+end //
+delimiter ;
+delimiter //
+create procedure getBillByStatusLength(in emp_in char(5),in bill_type_in bit,in search_in varchar(100),out length_out int)
+begin
+    select COUNT(*) into length_out from bill where (bill_type = bill_type_in and emp_id_created = emp_in) and (bill_id like concat('%',search_in,'%') or bill_code like concat('%',search_in,'%') or emp_id_created like concat('%',search_in,'%') or created like concat('%',search_in,'%') or emp_id_auth like concat('%',search_in,'%') or auth_date like concat('%',search_in,'%')) order by bill_status;
+end //
+delimiter ;
+select * from account;
+update account set permission = true where emp_id = '12345';
